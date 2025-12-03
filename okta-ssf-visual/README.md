@@ -1,164 +1,147 @@
-Okta SSF Visual Transmitter
+# Okta SSF Visual Transmitter
 
-A visual dashboard built with Next.js to demonstrate how to generate, sign, and transmit Security Event Tokens (SETs) to the Okta Security Events API. This tool acts as a "Transmitter" in the Shared Signals Framework (SSF) ecosystem.
+A visual dashboard built with **Next.js** to demonstrate how to generate, sign, and transmit Security Event Tokens (SETs) to the **Okta Security Events API**. This tool acts as a *Transmitter* in the Shared Signals Framework (SSF) ecosystem.
 
-🚀 Features
+---
 
-Visual Configuration: Simple UI to input Okta domain and issuer details.
+## 🚀 Features
 
-Key Generation: Generates RSA key pairs (RS256) in the browser using the Web Crypto API.
+* **Visual Configuration:** Simple UI to input Okta domain and issuer details.
+* **Key Generation:** Generates RSA key pairs (RS256) in the browser using the Web Crypto API.
+* **JWKS Export:** Provides JSON output you can host for Okta verification.
+* **Event Types:** Supports triggering two distinct signal types:
 
-JWKS Export: Provides the exact JSON needed to host your public keys for Okta verification.
+  * ⚡ **Lifecycle:** `session-revoked` (informational)
+  * 🚨 **Risk:** `account-compromised` (triggers Identity Threat Protection detections)
+* **Robust Backend:** Next.js API route handles JWT signing and audience validation.
+* **Optimized:** Built on Next.js 15+ with the React Compiler.
 
-Event Types: Supports triggering two distinct signal types:
+---
 
-⚡ Lifecycle: session-revoked (Informational)
+## 🛠️ Prerequisites
 
-🚨 Risk: account-compromised (Triggers Identity Threat Protection detections)
+* Node.js **v18 or later**
+* An **Okta Organization** (Developer or Production)
+* Access to the Okta Admin Console (to configure Shared Signals streams)
 
-Robust Backend: A Next.js API route that handles JWT signing and manages strict Okta audience validation logic.
+---
 
-Optimized: Built with Next.js 15+ and the React Compiler for automatic performance optimization.
-
-🛠️ Prerequisites
-
-Node.js (v18 or later)
-
-An Okta Organization (Developer or Production)
-
-Access to the Okta Admin Console to configure Security Streams.
-
-📦 Installation
+## 📦 Installation
 
 Clone the repository:
 
+```bash
 git clone <your-repo-url>
 cd okta-ssf-visual
-
+```
 
 Install dependencies:
 
+```bash
 npm install
+```
 
-
-This installs Next.js, React, jose (for crypto), uuid, and the React Compiler tools.
+This installs Next.js, React, `jose` (crypto), `uuid`, and React Compiler tooling.
 
 Run the development server:
 
+```bash
 npm run dev
+```
 
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-Open http://localhost:3000 with your browser.
+---
 
-⚙️ Configuration Guide
+## ⚙️ Configuration Guide
 
-To make this app talk to Okta, you need to set up a trust relationship.
+To connect this app to Okta, you need to establish a trust relationship.
 
-Step 1: Generate & Host Keys
+### **Step 1: Generate & Host Keys**
 
-Open the app at http://localhost:3000.
+1. Open the app at **[http://localhost:3000](http://localhost:3000)**.
+2. Click **Generate New Keys**.
+3. Copy the JSON shown in the yellow JWKS output box.
+4. Host it on a JSON provider such as **npoint.io** or **mocky.io**.
 
-Click "Generate New Keys".
+> ⚠️ Okta requires the JWKS URL to return `Content-Type: application/json`. GitHub Gists often fail this check.
 
-Copy the JSON output shown in the yellow box.
+5. Save and copy the public URL.
 
-Go to a JSON hosting service like npoint.io (recommended) or Mocky.
+### **Step 2: Configure Okta**
 
-Why? Okta requires the JWKS URL to return Content-Type: application/json. GitHub Gists often fail this check.
+1. Log in to your Okta Admin Console.
+2. Navigate to:
+   **Security → Device Integrations → Receive shared signals**
+3. Click **Create Stream**.
+4. Fill out the form:
 
-Paste your JSON, save it, and copy the public URL.
+   * **Stream Name:** `Visual Transmitter`
+   * **Issuer URL:** e.g. `https://my-local-transmitter.com`
+   * **JWKS URL:** the JSON host URL from Step 1
+5. Save the integration.
 
-Step 2: Configure Okta
+---
 
-Log in to your Okta Admin Console.
+## 🎮 Usage
 
-Navigate to Security > Device Integrations > Receive shared signals.
+### **Fields**
 
-Click Create Stream.
+* **Okta Domain:** Your org domain (e.g., `dev-123456.okta.com`).
 
-Fill in the details:
+  * Do **not** include `https://` or `-admin`.
+* **Issuer URL:** Must match the Issuer in Okta.
+* **Target Subject:** Email address of a real user in Okta.
 
-Stream Name: Visual Transmitter
+### **Send Events**
 
-Issuer URL: https://my-local-transmitter.com (or whatever matches your dashboard input).
+* Click **⚡ Lifecycle** to send a `session-revoked` event.
+* Click **🚨 Risk** to send an `account-compromised` event.
 
-JWKS URL: The npoint.io or mocky.io URL you created in Step 1.
+---
 
-Save the integration.
+## 🔍 Verification
 
-🎮 Usage
+### **Check System Logs**
 
-Okta Domain: Enter your org URL (e.g., dev-123456.okta.com).
+Go to **Reports → System Log** and search:
 
-Note: Do not include https:// or -admin. The app will auto-correct this, but clean input is best.
-
-Issuer URL: Must match exactly what you entered in Okta (e.g., https://my-local-transmitter.com).
-
-Target Subject: The email of a real user in your Okta org (e.g., your admin email).
-
-Transmit:
-
-Click ⚡ Lifecycle to send a standard log event.
-
-Click 🚨 Risk to trigger a threat detection.
-
-🔍 Verification
-
-Check System Logs
-
-Go to Reports > System Log in Okta. Search for:
-
+```
 eventType eq "security.events.provider.receive_event"
+```
 
+### **Check Risk Detection (ITP)**
 
-Check Risk Detection (ITP)
+To test Risk events:
 
-To see the Risk event explicitly:
+1. Ensure you have an **Entity Risk Policy** (Security → Entity Risk Policy) that sets risk to "High" when a signal is received.
+2. Send the 🚨 **Risk** event.
+3. Check the User Risk Report or user profile.
 
-Ensure you have an Entity Risk Policy set up in Okta (Security > Entity Risk Policy) that sets risk to "High" when a signal is received from your stream.
+---
 
-Send the 🚨 Risk event from the dashboard.
+## 📂 Project Structure
 
-Check the User Risk report or the user's profile to see the risk level change.
+```
+app/page.tsx               # Frontend dashboard UI
+app/api/transmit/route.ts  # Backend API for signing/transmitting SETs
+app/utils/crypto.ts        # RSA key generation helpers
+next.config.ts             # React Compiler configuration
+eslint.config.mjs          # Linting for React Compiler compatibility
+```
 
-📂 Project Structure
+---
 
-app/page.tsx: The frontend dashboard logic and UI.
+## ❓ Troubleshooting
 
-app/api/transmit/route.ts: The backend API that handles JWT signing and transmission.
+| Error                     | Cause                                        | Fix                                                              |
+| ------------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
+| **invalid_audience**      | `aud` claim doesn't match Okta's expectation | Ensure Okta domain is correct (no `-admin`, no trailing slash)   |
+| **jwks_url is not valid** | Okta cannot read your JWKS URL               | Host JSON on npoint/mocky with proper `application/json` headers |
+| **verification_failed**   | Signature mismatch                           | Update the JWKS URL if you regenerated keys                      |
 
-app/utils/crypto.ts: Helper functions for generating RSA keys.
+---
 
-next.config.ts: Configuration enabling the React Compiler.
+## 📜 License
 
-eslint.config.mjs: Linting rules ensuring React Compiler compatibility.
-
-❓ Troubleshooting
-
-Error
-
-Cause
-
-Fix
-
-invalid_audience
-
-The aud claim in the JWT doesn't match Okta's expectation.
-
-Ensure you are using the correct Okta Domain (no -admin, no trailing slash). The app attempts to fix this automatically.
-
-jwks_url is not valid
-
-Okta cannot read your JWKS URL.
-
-Ensure your hosting provider (npoint/mocky) sends Content-Type: application/json.
-
-verification_failed
-
-The signature is invalid.
-
-You likely generated new keys in the app but forgot to update the JSON on npoint.io. Update the hosted JSON.
-
-📜 License
-
-This project is open source and available under the MIT License.
+This project is open source under the **MIT License**.
