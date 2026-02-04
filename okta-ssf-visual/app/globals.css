@@ -580,6 +580,108 @@ body {
   gap: 4px;
 }
 
+/* Collapsible tip */
+.collapsible-tip {
+  margin-top: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.collapsible-tip summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  list-style: none;
+  transition: all 0.2s ease;
+}
+
+.collapsible-tip summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-tip summary::after {
+  content: '';
+  margin-left: auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.collapsible-tip[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.collapsible-tip summary:hover {
+  color: var(--accent-blue);
+  background: var(--bg-secondary);
+}
+
+.collapsible-tip summary svg {
+  color: var(--accent-blue);
+  flex-shrink: 0;
+}
+
+.collapsible-tip .tip-content {
+  padding: 0 14px 14px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-primary);
+}
+
+.collapsible-tip .tip-content p {
+  margin: 12px 0 8px 0;
+}
+
+.collapsible-tip .tip-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.collapsible-tip .tip-content li {
+  margin: 6px 0;
+}
+
+.collapsible-tip .tip-content a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.collapsible-tip .tip-content a:hover {
+  text-decoration: underline;
+}
+
+.collapsible-tip .tip-content code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent-purple);
+}
+
+.collapsible-tip .tip-note {
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: rgba(210, 153, 34, 0.1);
+  border-left: 3px solid var(--accent-yellow);
+  border-radius: 0 4px 4px 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;

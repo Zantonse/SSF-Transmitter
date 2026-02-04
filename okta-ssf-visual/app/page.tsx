@@ -264,6 +264,26 @@ export default function Home() {
                     </div>
                     <CopyButton text={keys.kid} label="Key ID" />
                   </div>
+                  <details className="collapsible-tip">
+                    <summary>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4" />
+                        <path d="M12 8h.01" />
+                      </svg>
+                      <span>Tip: How to host your JWKS</span>
+                    </summary>
+                    <div className="tip-content">
+                      <p>Use <a href="https://www.npoint.io" target="_blank" rel="noopener noreferrer">npoint.io</a> to quickly host your JWKS:</p>
+                      <ol>
+                        <li>Go to <a href="https://www.npoint.io" target="_blank" rel="noopener noreferrer">npoint.io</a> and click &quot;Create JSON Bin&quot;</li>
+                        <li>Paste your JWKS JSON and save</li>
+                        <li>Copy the API endpoint URL (e.g., <code>https://api.npoint.io/abc123</code>)</li>
+                        <li>Use this URL when configuring your SSF transmitter in Okta</li>
+                      </ol>
+                      <p className="tip-note">Note: GitHub Gists don&apos;t work because they return HTML instead of JSON with the correct Content-Type header.</p>
+                    </div>
+                  </details>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
