@@ -165,10 +165,10 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left Column - Configuration */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             {/* Configuration Card */}
             <div className="card p-6">
               <div className="section-header">
@@ -323,7 +323,7 @@ export default function Home() {
           </div>
 
           {/* Right Column - Activity Log */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-2">
             <div className="card p-6 sticky top-6">
               <div className="section-header">
                 <div className="section-number">
