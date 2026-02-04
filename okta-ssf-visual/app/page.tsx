@@ -194,12 +194,15 @@ export default function Home() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm text-[var(--text-secondary)] mb-2">Issuer URL</label>
-                  <input
-                    className="input-field"
-                    placeholder="https://my-local-transmitter.com"
-                    value={config.issuerUrl}
-                    onChange={(e) => setConfig({ ...config, issuerUrl: e.target.value })}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      className="input-field flex-1"
+                      placeholder="https://my-local-transmitter.com"
+                      value={config.issuerUrl}
+                      onChange={(e) => setConfig({ ...config, issuerUrl: e.target.value })}
+                    />
+                    <CopyButton text={config.issuerUrl} label="URL" compact />
+                  </div>
                   <p className="text-xs text-[var(--text-muted)] mt-2">Auto-populated when provider changes</p>
                 </div>
 
