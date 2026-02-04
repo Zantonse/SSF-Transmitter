@@ -84,12 +84,47 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      let errorCode = '';
+      let errorDescription = '';
+
+      // Try to parse Okta's JSON error response
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorCode = errorJson.error || errorJson.errorCode || '';
+        errorDescription = errorJson.error_description || errorJson.errorSummary || errorText;
+      } catch {
+        errorDescription = errorText || `HTTP ${response.status}`;
+      }
+
+      // Provide helpful hints based on common error codes
+      let hint = '';
+      if (errorCode === 'invalid_request' || errorDescription.includes('issuer')) {
+        hint = 'Check that the Issuer URL matches your Okta SSF stream configuration exactly.';
+      } else if (errorDescription.includes('jwks') || errorDescription.includes('key') || errorDescription.includes('signature')) {
+        hint = 'JWKS verification failed. Ensure your hosted JWKS contains the current public key.';
+      } else if (errorDescription.includes('audience') || errorDescription.includes('aud')) {
+        hint = 'Audience mismatch. Ensure Okta domain has no -admin suffix or trailing slash.';
+      } else if (response.status === 400) {
+        hint = 'Okta rejected the request. Verify SSF stream is configured with matching Issuer URL and JWKS.';
+      } else if (response.status === 401 || response.status === 403) {
+        hint = 'Authentication failed. Check that your JWKS is accessible and contains the correct key.';
+      }
+
+      console.error(`[Okta Error] ${response.status}: ${errorCode} - ${errorDescription}`);
+
       return NextResponse.json(
         {
           success: false,
-          error: `Okta Rejected Payload.`,
+          error: errorCode || `Okta Error (${response.status})`,
+          errorDescription,
+          hint,
           details: errorText,
-          debugAudience: tokenAudience,
+          debugInfo: {
+            audience: tokenAudience,
+            issuer: issuerUrl,
+            endpoint: destinationEndpoint,
+            keyId,
+          },
           status: response.status,
           payload,
         },

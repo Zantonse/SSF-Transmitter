@@ -87,10 +87,20 @@ export default function Home() {
       if (data.success) {
         addLog(`Event transmitted successfully (HTTP ${data.status || 202})`, 'success');
       } else {
-        console.error('Transmission Failed:', data);
-        addLog(`Transmission failed: ${data.error}`, 'error');
-        if (data.details) {
-          addLog(`Details: ${data.details}`, 'error');
+        // Log the error with details
+        addLog(`Transmission failed: ${data.error || 'Unknown error'}`, 'error');
+
+        if (data.errorDescription) {
+          addLog(`Reason: ${data.errorDescription}`, 'error');
+        }
+
+        if (data.hint) {
+          addLog(`Hint: ${data.hint}`, 'info');
+        }
+
+        if (data.debugInfo) {
+          addLog(`Issuer: ${data.debugInfo.issuer}`, 'info');
+          addLog(`Audience: ${data.debugInfo.audience}`, 'info');
         }
       }
     } catch (err: unknown) {
