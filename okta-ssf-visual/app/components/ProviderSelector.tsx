@@ -16,9 +16,9 @@ export default function ProviderSelector({
 
   return (
     <div>
-      <label className="block text-gray-600 mb-1">Security Provider</label>
+      <label className="block text-sm text-[var(--text-secondary)] mb-2">Security Provider</label>
       <select
-        className="w-full border p-2 rounded"
+        className="select-field w-full"
         value={selectedProviderId}
         onChange={(e) => {
           const provider = PROVIDER_LIST.find((p) => p.id === e.target.value);
@@ -32,7 +32,7 @@ export default function ProviderSelector({
         ))}
       </select>
       {selectedProvider && (
-        <p className="text-xs text-gray-400 mt-1">{selectedProvider.description}</p>
+        <p className="text-xs text-[var(--text-muted)] mt-2">{selectedProvider.description}</p>
       )}
     </div>
   );

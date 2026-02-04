@@ -1,147 +1,209 @@
-# Okta SSF Visual Transmitter
+# SSF Transmitter
 
-A visual dashboard built with **Next.js** to demonstrate how to generate, sign, and transmit Security Event Tokens (SETs) to the **Okta Security Events API**. This tool acts as a *Transmitter* in the Shared Signals Framework (SSF) ecosystem.
+A visual dashboard for simulating security provider signals to Okta's Identity Threat Protection (ITP) via the Shared Signals Framework (SSF).
 
----
-
-## 🚀 Features
-
-* **Visual Configuration:** Simple UI to input Okta domain and issuer details.
-* **Key Generation:** Generates RSA key pairs (RS256) in the browser using the Web Crypto API.
-* **JWKS Export:** Provides JSON output you can host for Okta verification.
-* **Event Types:** Supports triggering two distinct signal types:
-
-  * ⚡ **Lifecycle:** `session-revoked` (informational)
-  * 🚨 **Risk:** `account-compromised` (triggers Identity Threat Protection detections)
-* **Robust Backend:** Next.js API route handles JWT signing and audience validation.
-* **Optimized:** Built on Next.js 15+ with the React Compiler.
+Built with **Next.js 16**, this tool acts as a *Transmitter* that generates, signs, and sends Security Event Tokens (SETs) to Okta, simulating real-world integrations with providers like CrowdStrike, Zscaler, and Palo Alto Networks.
 
 ---
 
-## 🛠️ Prerequisites
+## Features
 
-* Node.js **v18 or later**
-* An **Okta Organization** (Developer or Production)
-* Access to the Okta Admin Console (to configure Shared Signals streams)
+- **Multi-Provider Simulation** - Simulate signals from CrowdStrike Falcon, Zscaler ZIA, Palo Alto Cortex XDR, or custom sources
+- **12 Pre-configured Event Types** - Malware detection, credential theft, DLP violations, ransomware behavior, and more
+- **Browser-based Key Generation** - RSA key pairs (RS256) generated securely in the browser
+- **JWKS Export** - Ready-to-host JSON Web Key Set for Okta verification
+- **Real-time Activity Log** - Track all transmission attempts and responses
+- **Dark/Light Mode** - Toggle between themes for your preference
+- **ITP Integration** - All events use Okta's `user-risk-change` schema to trigger Identity Threat Protection
 
 ---
 
-## 📦 Installation
+## Supported Providers & Events
 
-Clone the repository:
+| Provider | Events |
+|----------|--------|
+| **CrowdStrike Falcon** | Malware Detected, Suspicious Process, IOC Match, Credential Theft Attempt |
+| **Zscaler ZIA** | DLP Policy Violation, Malware Download Blocked, Suspicious Cloud Activity |
+| **Palo Alto Cortex XDR** | C2 Communication Detected, Lateral Movement, Ransomware Behavior |
+| **Custom** | Generic Risk Event, Session Revoked |
+
+Each event includes appropriate severity levels (HIGH/MEDIUM) and descriptive payloads that appear in Okta's System Log.
+
+---
+
+## Prerequisites
+
+- **Node.js v18+**
+- **Okta Organization** with admin access
+- **Entity Risk Policy** configured in Okta (for ITP triggers)
+
+---
+
+## Quick Start
+
+### 1. Install & Run
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Zantonse/SSF-Transmitter.git
 cd okta-ssf-visual
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-This installs Next.js, React, `jose` (crypto), `uuid`, and React Compiler tooling.
-
-Run the development server:
-
-```bash
 npm run dev
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+Open **http://localhost:3000**
+
+### 2. Generate Keys
+
+1. Click **Generate Keys** in the Key Management section
+2. Copy the JWKS JSON output
+3. Host the JSON at a public URL (recommended: [npoint.io](https://npoint.io) or [mocky.io](https://mocky.io))
+
+> **Important:** The JWKS URL must return `Content-Type: application/json`. GitHub Gists often fail this requirement.
+
+### 3. Configure Okta
+
+1. Log in to Okta Admin Console
+2. Navigate to: **Security > Device Integrations > Receive shared signals**
+3. Click **Create Stream** and enter:
+   - **Stream Name:** `SSF Transmitter`
+   - **Issuer URL:** Use the provider's default (e.g., `https://falcon.crowdstrike.com`) or your custom URL
+   - **JWKS URL:** Your hosted JWKS endpoint from Step 2
+4. Save the integration
+
+### 4. Configure Entity Risk Policy (Required for ITP)
+
+1. Navigate to: **Security > Entity Risk Policy**
+2. Create or edit a policy that responds to external risk signals
+3. Configure actions (e.g., require MFA, block access) when risk level changes
+
+### 5. Send Events
+
+1. Enter your **Okta Domain** (e.g., `dev-123456.okta.com`)
+2. Select a **Security Provider** from the dropdown
+3. Enter a **Target Subject** (email of a real Okta user)
+4. Click any event button to transmit
 
 ---
 
-## ⚙️ Configuration Guide
+## Configuration Fields
 
-To connect this app to Okta, you need to establish a trust relationship.
-
-### **Step 1: Generate & Host Keys**
-
-1. Open the app at **[http://localhost:3000](http://localhost:3000)**.
-2. Click **Generate New Keys**.
-3. Copy the JSON shown in the yellow JWKS output box.
-4. Host it on a JSON provider such as **npoint.io** or **mocky.io**.
-
-> ⚠️ Okta requires the JWKS URL to return `Content-Type: application/json`. GitHub Gists often fail this check.
-
-5. Save and copy the public URL.
-
-### **Step 2: Configure Okta**
-
-1. Log in to your Okta Admin Console.
-2. Navigate to:
-   **Security → Device Integrations → Receive shared signals**
-3. Click **Create Stream**.
-4. Fill out the form:
-
-   * **Stream Name:** `Visual Transmitter`
-   * **Issuer URL:** e.g. `https://my-local-transmitter.com`
-   * **JWKS URL:** the JSON host URL from Step 1
-5. Save the integration.
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Okta Domain** | Your Okta org domain (no `https://` or `-admin`) | `dev-123456.okta.com` |
+| **Security Provider** | The simulated security vendor | CrowdStrike Falcon |
+| **Issuer URL** | Must match Okta stream configuration | `https://falcon.crowdstrike.com` |
+| **Target Subject** | Email of the user to apply the risk signal to | `user@company.com` |
 
 ---
 
-## 🎮 Usage
+## Verifying Events in Okta
 
-### **Fields**
+### System Log
 
-* **Okta Domain:** Your org domain (e.g., `dev-123456.okta.com`).
-
-  * Do **not** include `https://` or `-admin`.
-* **Issuer URL:** Must match the Issuer in Okta.
-* **Target Subject:** Email address of a real user in Okta.
-
-### **Send Events**
-
-* Click **⚡ Lifecycle** to send a `session-revoked` event.
-* Click **🚨 Risk** to send an `account-compromised` event.
-
----
-
-## 🔍 Verification
-
-### **Check System Logs**
-
-Go to **Reports → System Log** and search:
+Navigate to **Reports > System Log** and search:
 
 ```
 eventType eq "security.events.provider.receive_event"
 ```
 
-### **Check Risk Detection (ITP)**
+You'll see entries showing:
+- The provider name in `initiating_entity`
+- Event details in `reason_admin`
+- Risk level changes
 
-To test Risk events:
+### User Risk
 
-1. Ensure you have an **Entity Risk Policy** (Security → Entity Risk Policy) that sets risk to "High" when a signal is received.
-2. Send the 🚨 **Risk** event.
-3. Check the User Risk Report or user profile.
+After sending a HIGH severity event:
+
+1. Go to **Directory > People**
+2. Select the target user
+3. Check their **Risk Level** in the profile
+
+Or view **Reports > User Risk Report** for aggregated data.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
-app/page.tsx               # Frontend dashboard UI
-app/api/transmit/route.ts  # Backend API for signing/transmitting SETs
-app/utils/crypto.ts        # RSA key generation helpers
-next.config.ts             # React Compiler configuration
-eslint.config.mjs          # Linting for React Compiler compatibility
+app/
+├── page.tsx                    # Main dashboard UI
+├── globals.css                 # Theme variables & styling
+├── api/transmit/route.ts       # API route for signing & sending SETs
+├── utils/crypto.ts             # RSA key generation
+├── types/providers.ts          # TypeScript interfaces
+├── config/providers.ts         # Provider & event definitions
+└── components/
+    ├── ProviderSelector.tsx    # Provider dropdown
+    └── EventButtonGrid.tsx     # Event buttons grid
 ```
 
 ---
 
-## ❓ Troubleshooting
+## Adding Custom Providers
 
-| Error                     | Cause                                        | Fix                                                              |
-| ------------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
-| **invalid_audience**      | `aud` claim doesn't match Okta's expectation | Ensure Okta domain is correct (no `-admin`, no trailing slash)   |
-| **jwks_url is not valid** | Okta cannot read your JWKS URL               | Host JSON on npoint/mocky with proper `application/json` headers |
-| **verification_failed**   | Signature mismatch                           | Update the JWKS URL if you regenerated keys                      |
+Edit `app/config/providers.ts` to add new providers:
+
+```typescript
+newprovider: {
+  id: 'newprovider',
+  name: 'New Provider',
+  defaultIssuer: 'https://api.newprovider.com',
+  description: 'Description here',
+  color: 'bg-purple-600',
+  events: [
+    {
+      id: 'event-id',
+      label: 'Event Name',
+      schema: OKTA_RISK_SCHEMA,
+      severity: 'high',
+      description: 'Event description',
+      buildPayload: (email, timestamp, entity) =>
+        buildRiskPayload(email, timestamp, entity, 'Reason text for Okta logs'),
+    },
+  ],
+},
+```
 
 ---
 
-## 📜 License
+## Troubleshooting
 
-This project is open source under the **MIT License**.
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `invalid_audience` | Audience claim mismatch | Ensure Okta domain has no `-admin` suffix or trailing slash |
+| `jwks_url is not valid` | Okta can't read your JWKS | Host on npoint.io/mocky.io with proper JSON content-type |
+| `verification_failed` | Signature doesn't match | Update hosted JWKS after regenerating keys |
+| Events not triggering ITP | No Entity Risk Policy | Create a policy under Security > Entity Risk Policy |
+| User risk not changing | Policy not configured | Ensure policy action sets risk level on signal receipt |
+
+---
+
+## Development
+
+```bash
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run linting
+npm run lint
+```
+
+---
+
+## Tech Stack
+
+- **Next.js 16** with Turbopack
+- **React 19** with React Compiler
+- **jose** for JWT signing
+- **Tailwind CSS** for styling
+- **TypeScript** for type safety
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.

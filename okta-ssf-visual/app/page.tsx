@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { JWK } from 'jose';
 import { generateKeyPair } from './utils/crypto';
 import { SecurityProvider, SecurityEvent } from './types/providers';
@@ -14,39 +14,56 @@ export default function Home() {
     subjectEmail: 'test-user@example.com',
   });
 
-  const [providerId, setProviderId] = useState('custom');
+  const [providerId, setProviderId] = useState('crowdstrike');
   const [keys, setKeys] = useState<{ privatePem: string; publicJwk: JWK; kid: string } | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<{ time: string; message: string; type: 'info' | 'success' | 'error' }[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastPayload, setLastPayload] = useState<Record<string, unknown> | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   const selectedProvider = PROVIDERS[providerId];
 
-  const addLog = (msg: string) => setLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev]);
+  // Apply theme class to document root
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const addLog = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    setLogs((prev) => [{ time, message, type }, ...prev]);
+  };
 
   const handleGenerateKeys = async () => {
-    addLog('Generating new RSA Key Pair...');
+    addLog('Generating RSA-256 key pair...', 'info');
     const result = await generateKeyPair();
     setKeys(result);
-    addLog(`Keys generated! Key ID: ${result.kid}`);
-    addLog('IMPORTANT: You must update npoint.io with the new JSON below!');
+    addLog(`Key pair generated. KID: ${result.kid}`, 'success');
+    addLog('Update your JWKS endpoint with the public key below', 'info');
   };
 
   const handleProviderChange = (provider: SecurityProvider) => {
     setProviderId(provider.id);
     setConfig((prev) => ({ ...prev, issuerUrl: provider.defaultIssuer }));
-    addLog(`Switched to ${provider.name} - issuer URL updated`);
+    addLog(`Provider switched to ${provider.name}`, 'info');
   };
 
   const handleTransmit = async (event: SecurityEvent) => {
     if (!keys || !config.oktaDomain || !config.issuerUrl) {
-      addLog('Error: Missing configuration or keys.');
+      addLog('Missing configuration or keys', 'error');
       return;
     }
 
     setLoading(true);
     setLastPayload(null);
-    addLog(`Transmitting ${selectedProvider.name} - ${event.label} to Okta...`);
+    addLog(`Transmitting ${event.label} via ${selectedProvider.name}...`, 'info');
 
     try {
       const res = await fetch('/api/transmit', {
@@ -68,130 +85,244 @@ export default function Home() {
       }
 
       if (data.success) {
-        addLog(`Success! Event accepted by Okta (Status: ${data.status || 202})`);
+        addLog(`Event transmitted successfully (HTTP ${data.status || 202})`, 'success');
       } else {
         console.error('Transmission Failed:', data);
-        const detailMsg = data.details ? `Details: ${data.details}` : '';
-        addLog(`Error: ${data.error} (Status: ${data.status}) ${detailMsg}`);
-
-        if (data.debugAudience) {
-          addLog(`Debug: Sent to Audience: ${data.debugAudience}`);
+        addLog(`Transmission failed: ${data.error}`, 'error');
+        if (data.details) {
+          addLog(`Details: ${data.details}`, 'error');
         }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      addLog(`Network Error: ${message}`);
+      addLog(`Network error: ${message}`, 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <main className="min-h-screen bg-gray-50 p-8 font-mono text-sm">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Okta SSF Visual Transmitter</h1>
+  const providerColorClass = `provider-${providerId}`;
 
-        {/* Configuration Section */}
-        <div className="bg-white p-6 rounded shadow space-y-4">
-          <h2 className="text-lg font-semibold text-gray-700">1. Configuration</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-600 mb-1">Okta Domain</label>
-              <input
-                className="w-full border p-2 rounded"
-                placeholder="dev-12345.okta.com"
-                value={config.oktaDomain}
-                onChange={(e) => setConfig({ ...config, oktaDomain: e.target.value })}
-              />
-              <p className="text-xs text-gray-400 mt-1">e.g. craigverzosa.oktapreview.com</p>
-            </div>
-            <ProviderSelector selectedProviderId={providerId} onProviderChange={handleProviderChange} />
-            <div className="col-span-2">
-              <label className="block text-gray-600 mb-1">Issuer URL (matches Okta config)</label>
-              <input
-                className="w-full border p-2 rounded"
-                placeholder="https://my-local-transmitter.com"
-                value={config.issuerUrl}
-                onChange={(e) => setConfig({ ...config, issuerUrl: e.target.value })}
-              />
-              <p className="text-xs text-gray-400 mt-1">Auto-filled when provider changes, but can be customized</p>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-gray-600 mb-1">Target Subject (Email)</label>
-              <input
-                className="w-full border p-2 rounded"
-                value={config.subjectEmail}
-                onChange={(e) => setConfig({ ...config, subjectEmail: e.target.value })}
-              />
+  return (
+    <main className="min-h-screen grid-bg">
+      {/* Header */}
+      <header className="border-b border-[var(--border-default)] bg-[var(--bg-secondary)]">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-purple)] flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                  SSF Transmitter
+                </h1>
+                <p className="text-xs text-[var(--text-muted)]">Shared Signals Framework</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Key Management */}
-        <div className="bg-white p-6 rounded shadow space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-700">2. Key Management</h2>
-            <button
-              onClick={handleGenerateKeys}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Generate New Keys
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="status-dot" />
+              <span className="text-xs text-[var(--text-secondary)]">System Ready</span>
+            </div>
+            <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+              {theme === 'dark' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
             </button>
           </div>
+        </div>
+      </header>
 
-          {keys && (
-            <div className="space-y-4">
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-                <strong>Action Required:</strong> Copy the JSON below and update your npoint.io / Mocky bin.
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Configuration */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Configuration Card */}
+            <div className="card p-6">
+              <div className="section-header">
+                <div className="section-number">01</div>
+                <h2 className="section-title">Configuration</h2>
               </div>
-              <textarea
-                readOnly
-                className="w-full h-32 border p-2 rounded bg-gray-100 text-xs"
-                value={JSON.stringify({ keys: [keys.publicJwk] }, null, 2)}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-2">Okta Domain</label>
+                  <input
+                    className="input-field"
+                    placeholder="dev-12345.okta.com"
+                    value={config.oktaDomain}
+                    onChange={(e) => setConfig({ ...config, oktaDomain: e.target.value })}
+                  />
+                </div>
+
+                <ProviderSelector
+                  selectedProviderId={providerId}
+                  onProviderChange={handleProviderChange}
+                />
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-[var(--text-secondary)] mb-2">Issuer URL</label>
+                  <input
+                    className="input-field"
+                    placeholder="https://my-local-transmitter.com"
+                    value={config.issuerUrl}
+                    onChange={(e) => setConfig({ ...config, issuerUrl: e.target.value })}
+                  />
+                  <p className="text-xs text-[var(--text-muted)] mt-2">Auto-populated when provider changes</p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-[var(--text-secondary)] mb-2">Target Subject</label>
+                  <input
+                    className="input-field"
+                    placeholder="user@example.com"
+                    value={config.subjectEmail}
+                    onChange={(e) => setConfig({ ...config, subjectEmail: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Key Management Card */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div className="section-header mb-0">
+                  <div className="section-number">02</div>
+                  <h2 className="section-title">Key Management</h2>
+                </div>
+                <button onClick={handleGenerateKeys} className="btn-primary flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                  </svg>
+                  Generate Keys
+                </button>
+              </div>
+
+              {keys ? (
+                <div className="space-y-4">
+                  <div className="alert-warning">
+                    <span className="alert-icon">!</span>
+                    <span className="alert-text">
+                      Copy the JWKS below and host it at your issuer&apos;s /.well-known/jwks.json endpoint
+                    </span>
+                  </div>
+                  <textarea
+                    readOnly
+                    className="jwks-output h-32"
+                    value={JSON.stringify({ keys: [keys.publicJwk] }, null, 2)}
+                  />
+                  <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span>Key ID: {keys.kid}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center mb-4">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-[var(--text-muted)]">No keys generated yet</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Click &quot;Generate Keys&quot; to create an RSA key pair</p>
+                </div>
+              )}
+            </div>
+
+            {/* Transmission Card */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div className="section-header mb-0">
+                  <div className="section-number">03</div>
+                  <h2 className="section-title">Transmission</h2>
+                </div>
+                <div className={`provider-indicator ${providerColorClass}`}>
+                  <span style={{ color: 'var(--provider-color)' }}>{selectedProvider.name}</span>
+                </div>
+              </div>
+
+              <EventButtonGrid
+                events={selectedProvider.events}
+                loading={loading}
+                disabled={!keys}
+                onEventClick={handleTransmit}
               />
-              <p className="text-gray-500 text-xs">Key ID: {keys.kid}</p>
-            </div>
-          )}
-        </div>
 
-        {/* Action Area */}
-        <div className="bg-white p-6 rounded shadow space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-700">3. Transmission</h2>
-            <span className={`px-3 py-1 rounded text-white text-xs ${selectedProvider.color}`}>
-              {selectedProvider.name}
-            </span>
+              <p className="text-xs text-[var(--text-muted)] text-center mt-4">
+                All events trigger Okta Identity Threat Protection via the user-risk-change schema
+              </p>
+            </div>
+
+            {/* Payload Viewer */}
+            {lastPayload && (
+              <div className="card p-6">
+                <div className="section-header">
+                  <div className="section-number">04</div>
+                  <h2 className="section-title">Last Payload</h2>
+                </div>
+                <div className="json-viewer max-h-80 overflow-auto">
+                  <pre className="text-[var(--accent-green)]">{JSON.stringify(lastPayload, null, 2)}</pre>
+                </div>
+              </div>
+            )}
           </div>
-          <EventButtonGrid
-            events={selectedProvider.events}
-            loading={loading}
-            disabled={!keys}
-            onEventClick={handleTransmit}
-          />
-          <p className="text-xs text-gray-500 text-center mt-2">
-            All events use the Okta ITP user-risk-change schema and can trigger Identity Threat Protection detections.
-          </p>
-        </div>
 
-        {/* Payload Viewer */}
-        {lastPayload && (
-          <div className="bg-white p-6 rounded shadow space-y-4">
-            <h2 className="text-lg font-semibold text-gray-700">4. Last Transmitted Payload</h2>
-            <div className="bg-gray-800 text-cyan-300 p-4 rounded text-xs font-mono overflow-auto max-h-96">
-              <pre>{JSON.stringify(lastPayload, null, 2)}</pre>
+          {/* Right Column - Activity Log */}
+          <div className="lg:col-span-1">
+            <div className="card p-6 sticky top-6">
+              <div className="section-header">
+                <div className="section-number">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                </div>
+                <h2 className="section-title">Activity Log</h2>
+              </div>
+
+              <div className="log-container h-[500px] overflow-y-auto">
+                {logs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" className="mb-3 opacity-50">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <p className="text-sm text-[var(--text-muted)]">Waiting for activity...</p>
+                  </div>
+                ) : (
+                  logs.map((log, i) => (
+                    <div key={i} className={`log-entry ${log.type}`}>
+                      <span className="log-timestamp">{log.time}</span>
+                      <span className="log-message">{log.message}</span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Logs */}
-        <div className="bg-gray-900 text-green-400 p-6 rounded shadow h-64 overflow-y-auto">
-          <h3 className="text-gray-500 mb-2 border-b border-gray-700 pb-2">Activity Log</h3>
-          {logs.map((log, i) => (
-            <div key={i} className="mb-1 break-words">
-              {log}
-            </div>
-          ))}
-          {logs.length === 0 && <span className="text-gray-600">Waiting for action...</span>}
         </div>
       </div>
     </main>
