@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Build Payload using event's buildPayload function
     const timestamp = Math.floor(Date.now() / 1000);
-    const eventsPayload = event.buildPayload(subjectEmail, timestamp, provider.name);
+    const eventsPayload = event.buildPayload(subjectEmail, timestamp);
 
     // 4. Construct the SET
     const tokenAudience = `https://${oktaHost}`;

@@ -6,7 +6,7 @@ export interface SecurityEvent {
   schema: string;
   severity: RiskLevel;
   description: string;
-  buildPayload: (email: string, timestamp: number, entity: string) => Record<string, unknown>;
+  buildPayload: (email: string, timestamp: number) => Record<string, unknown>;
 }
 
 export interface SecurityProvider {

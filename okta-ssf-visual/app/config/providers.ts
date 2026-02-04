@@ -5,8 +5,8 @@ const OKTA_RISK_SCHEMA = 'https://schemas.okta.com/secevent/okta/event-type/user
 function buildRiskPayload(
   email: string,
   timestamp: number,
-  entity: string,
-  reasonText: string,
+  reasonAdmin: string,
+  reasonUser: string,
   currentLevel: 'medium' | 'high' = 'high',
   previousLevel: 'low' | 'medium' = 'low'
 ): Record<string, unknown> {
@@ -15,8 +15,9 @@ function buildRiskPayload(
       event_timestamp: timestamp,
       current_level: currentLevel,
       previous_level: previousLevel,
-      initiating_entity: entity,
-      reason_admin: { en: reasonText },
+      initiating_entity: 'policy',
+      reason_admin: { en: reasonAdmin },
+      reason_user: { en: reasonUser },
       subject: {
         user: {
           format: 'email',
@@ -41,8 +42,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Malware identified on user endpoint',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Malware detected on user endpoint by CrowdStrike Falcon'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Malware detected on user endpoint by CrowdStrike Falcon',
+            'Security software detected a threat on your device'
+          ),
       },
       {
         id: 'suspicious-process',
@@ -50,8 +56,14 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'medium',
         description: 'Suspicious process execution detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Suspicious process execution detected on endpoint', 'medium'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Suspicious process execution detected on endpoint',
+            'Unusual activity was detected on your device',
+            'medium'
+          ),
       },
       {
         id: 'ioc-match',
@@ -59,8 +71,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Indicator of compromise matched threat intelligence',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Indicator of compromise matched known threat intelligence'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Indicator of compromise matched known threat intelligence',
+            'A security threat was identified on your device'
+          ),
       },
       {
         id: 'credential-theft',
@@ -68,8 +85,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Credential theft attempt detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Credential theft attempt detected by CrowdStrike Falcon'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Credential theft attempt detected by CrowdStrike Falcon',
+            'An attempt to steal your credentials was blocked'
+          ),
       },
     ],
   },
@@ -86,8 +108,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Data loss prevention policy violation detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'DLP policy violation: sensitive data exfiltration attempted'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'DLP policy violation: sensitive data exfiltration attempted',
+            'A data security policy was violated'
+          ),
       },
       {
         id: 'malware-blocked',
@@ -95,8 +122,14 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'medium',
         description: 'Attempted malware download was blocked',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Malware download attempt blocked by Zscaler ZIA', 'medium'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Malware download attempt blocked by Zscaler ZIA',
+            'A potentially harmful download was blocked',
+            'medium'
+          ),
       },
       {
         id: 'suspicious-cloud',
@@ -104,8 +137,14 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'medium',
         description: 'Suspicious cloud application activity detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Suspicious cloud application activity detected', 'medium'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Suspicious cloud application activity detected',
+            'Unusual cloud activity was detected from your account',
+            'medium'
+          ),
       },
     ],
   },
@@ -122,8 +161,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Command and control communication detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Command and control (C2) communication detected'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Command and control (C2) communication detected',
+            'Suspicious network communication was detected from your device'
+          ),
       },
       {
         id: 'lateral-movement',
@@ -131,8 +175,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Lateral movement behavior detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Lateral movement detected in network by Cortex XDR'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Lateral movement detected in network by Cortex XDR',
+            'Suspicious network activity was detected from your account'
+          ),
       },
       {
         id: 'ransomware-behavior',
@@ -140,8 +189,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Ransomware-like behavior detected',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'Ransomware behavior detected: mass file encryption attempt'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'Ransomware behavior detected: mass file encryption attempt',
+            'Potentially harmful file activity was detected on your device'
+          ),
       },
     ],
   },
@@ -158,8 +212,13 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'high',
         description: 'Generic high-risk event for testing ITP',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'External provider reported account compromise'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'External provider reported account compromise',
+            'Your account may have been compromised'
+          ),
       },
       {
         id: 'session-revoked',
@@ -167,8 +226,14 @@ export const PROVIDERS: Record<string, SecurityProvider> = {
         schema: OKTA_RISK_SCHEMA,
         severity: 'medium',
         description: 'User session terminated due to security concern',
-        buildPayload: (email, timestamp, entity) =>
-          buildRiskPayload(email, timestamp, entity, 'User session revoked due to security policy', 'medium'),
+        buildPayload: (email, timestamp) =>
+          buildRiskPayload(
+            email,
+            timestamp,
+            'User session revoked due to security policy',
+            'Your session was ended for security reasons',
+            'medium'
+          ),
       },
     ],
   },
