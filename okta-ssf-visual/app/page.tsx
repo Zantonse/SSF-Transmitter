@@ -6,6 +6,7 @@ import { SecurityProvider, SecurityEvent } from './types/providers';
 import { PROVIDERS } from './config/providers';
 import ProviderSelector from './components/ProviderSelector';
 import EventButtonGrid from './components/EventButtonGrid';
+import CopyButton from './components/CopyButton';
 
 export default function Home() {
   const [config, setConfig] = useState({
@@ -237,17 +238,28 @@ export default function Home() {
                       Copy the JWKS below and host it at your issuer&apos;s /.well-known/jwks.json endpoint
                     </span>
                   </div>
-                  <textarea
-                    readOnly
-                    className="jwks-output h-32"
-                    value={JSON.stringify({ keys: [keys.publicJwk] }, null, 2)}
-                  />
-                  <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    <span>Key ID: {keys.kid}</span>
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      className="jwks-output h-32"
+                      value={JSON.stringify({ keys: [keys.publicJwk] }, null, 2)}
+                    />
+                    <div className="absolute top-2 right-2">
+                      <CopyButton
+                        text={JSON.stringify({ keys: [keys.publicJwk] }, null, 2)}
+                        label="JWKS"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      <span>Key ID: {keys.kid}</span>
+                    </div>
+                    <CopyButton text={keys.kid} label="Key ID" />
                   </div>
                 </div>
               ) : (
@@ -290,9 +302,15 @@ export default function Home() {
             {/* Payload Viewer */}
             {lastPayload && (
               <div className="card p-6">
-                <div className="section-header">
-                  <div className="section-number">04</div>
-                  <h2 className="section-title">Last Payload</h2>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="section-header mb-0">
+                    <div className="section-number">04</div>
+                    <h2 className="section-title">Last Payload</h2>
+                  </div>
+                  <CopyButton
+                    text={JSON.stringify(lastPayload, null, 2)}
+                    label="Payload"
+                  />
                 </div>
                 <div className="json-viewer max-h-80 overflow-auto">
                   <pre className="text-[var(--accent-green)]">{JSON.stringify(lastPayload, null, 2)}</pre>
