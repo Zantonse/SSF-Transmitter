@@ -121,37 +121,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              {/* Okta Logo - Sunburst */}
-              <div className="okta-logo">
-                <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g fill="var(--text-primary)">
-                    {/* Radiating bars */}
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(0 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(18 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(36 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(54 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(72 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(90 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(108 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(126 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(144 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(162 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(180 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(198 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(216 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(234 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(252 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(270 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(288 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(306 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(324 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                    <rect x="47" y="5" width="6" height="18" rx="2" transform="rotate(342 50 50)" style={{transformOrigin: '50px 50px'}}/>
-                  </g>
-                </svg>
-              </div>
+              {/* Okta Logo */}
+              <img
+                src="/okta-logo.png"
+                alt="Okta"
+                className="okta-logo-img"
+                height={32}
+              />
               <div>
                 <h1 className="text-lg font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  Okta SSF Transmitter
+                  SSF Transmitter
                 </h1>
                 <p className="text-xs text-[var(--text-muted)]">Shared Signals Framework for Identity Threat Protection</p>
               </div>

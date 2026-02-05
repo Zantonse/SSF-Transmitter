@@ -420,6 +420,16 @@ body {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
+.okta-logo-img {
+  height: 32px;
+  width: auto;
+  filter: invert(1);
+}
+
+:root.light .okta-logo-img {
+  filter: invert(0);
+}
+
 /* Primary button - Okta branded */
 .btn-primary {
   background: linear-gradient(135deg, var(--okta-blue, var(--accent-blue)), var(--okta-blue-dark, #1f6feb));
