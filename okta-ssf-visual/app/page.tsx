@@ -118,21 +118,21 @@ export default function Home() {
     <main className="min-h-screen grid-bg">
       {/* Header */}
       <header className="border-b border-[var(--border-default)] bg-[var(--bg-secondary)]">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-purple)] flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
+              {/* Okta Logo */}
+              <div className="okta-logo">
+                <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="50" fill="var(--accent-blue)"/>
+                  <circle cx="50" cy="50" r="20" fill="white"/>
                 </svg>
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  SSF Transmitter
+                  Okta SSF Transmitter
                 </h1>
-                <p className="text-xs text-[var(--text-muted)]">Shared Signals Framework</p>
+                <p className="text-xs text-[var(--text-muted)]">Shared Signals Framework for Identity Threat Protection</p>
               </div>
             </div>
           </div>
@@ -178,7 +178,13 @@ export default function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm text-[var(--text-secondary)] mb-2">Okta Domain</label>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-2 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="50" cy="50" r="50" fill="var(--accent-blue)"/>
+                      <circle cx="50" cy="50" r="20" fill="white"/>
+                    </svg>
+                    Okta Domain
+                  </label>
                   <input
                     className="input-field"
                     placeholder="dev-12345.okta.com"
@@ -376,6 +382,25 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-[var(--border-default)] bg-[var(--bg-secondary)] mt-8">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+            <span>Built for</span>
+            <div className="flex items-center gap-1">
+              <svg width="16" height="16" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="50" fill="var(--accent-blue)"/>
+                <circle cx="50" cy="50" r="20" fill="white"/>
+              </svg>
+              <span className="font-semibold text-[var(--text-secondary)]">Okta Identity Threat Protection</span>
+            </div>
+          </div>
+          <div className="text-xs text-[var(--text-muted)]">
+            Shared Signals Framework (SSF) Transmitter
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
