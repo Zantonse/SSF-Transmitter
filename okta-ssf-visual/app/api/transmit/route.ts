@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as jose from 'jose';
 import { v4 as uuidv4 } from 'uuid';
 import { PROVIDERS } from '../../config/providers';
+import { RiskLevel } from '../../types/providers';
 
 interface TransmitRequest {
   oktaDomain: string;
@@ -9,8 +10,10 @@ interface TransmitRequest {
   privateKeyPem: string;
   keyId: string;
   subjectEmail: string;
-  providerId: string;
-  eventId: string;
+  providerId?: string;
+  eventId?: string;
+  riskLevel?: RiskLevel;
+  customPayload?: Record<string, unknown>;
 }
 
 export async function POST(req: NextRequest) {
@@ -32,24 +35,38 @@ export async function POST(req: NextRequest) {
 
     const issuerUrl = body.issuerUrl.trim();
     const subjectEmail = body.subjectEmail.trim();
-    const { privateKeyPem, keyId, providerId, eventId } = body;
-
-    // 2. Lookup Provider and Event
-    const provider = PROVIDERS[providerId];
-    if (!provider) {
-      throw new Error(`Unknown provider: ${providerId}`);
-    }
-
-    const event = provider.events.find((e) => e.id === eventId);
-    if (!event) {
-      throw new Error(`Unknown event "${eventId}" for provider "${providerId}"`);
-    }
+    const { privateKeyPem, keyId, providerId, eventId, riskLevel, customPayload } = body;
 
     const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
 
-    // 3. Build Payload using event's buildPayload function
+    // 2. Build Payload - either from custom payload or provider/event
     const timestamp = Math.floor(Date.now() / 1000);
-    const eventsPayload = event.buildPayload(subjectEmail, timestamp);
+    let eventsPayload: Record<string, unknown>;
+    let providerName = 'Custom';
+    let eventLabel = 'Custom Event';
+
+    if (customPayload) {
+      // Use custom payload directly
+      eventsPayload = customPayload;
+      eventLabel = Object.keys(customPayload)[0]?.split('/').pop() || 'custom-event';
+    } else if (providerId && eventId) {
+      // Lookup Provider and Event
+      const provider = PROVIDERS[providerId];
+      if (!provider) {
+        throw new Error(`Unknown provider: ${providerId}`);
+      }
+
+      const event = provider.events.find((e) => e.id === eventId);
+      if (!event) {
+        throw new Error(`Unknown event "${eventId}" for provider "${providerId}"`);
+      }
+
+      providerName = provider.name;
+      eventLabel = event.label;
+      eventsPayload = event.buildPayload(subjectEmail, timestamp, riskLevel || 'high');
+    } else {
+      throw new Error('Either customPayload or providerId/eventId must be provided');
+    }
 
     // 4. Construct the SET
     const tokenAudience = `https://${oktaHost}`;
@@ -63,7 +80,7 @@ export async function POST(req: NextRequest) {
       events: eventsPayload,
     };
 
-    console.log(`[Server] Sending ${provider.name} - ${event.label} to: ${destinationEndpoint}`);
+    console.log(`[Server] Sending ${providerName} - ${eventLabel} to: ${destinationEndpoint}`);
 
     // 5. Sign and Send
     const signedJwt = await new jose.SignJWT(payload)
@@ -136,7 +153,7 @@ export async function POST(req: NextRequest) {
       success: true,
       jwt: signedJwt,
       payload,
-      logs: `Successfully sent ${provider.name} - ${event.label} to ${destinationEndpoint}. Status: ${response.status}`,
+      logs: `Successfully sent ${providerName} - ${eventLabel} to ${destinationEndpoint}. Status: ${response.status}`,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

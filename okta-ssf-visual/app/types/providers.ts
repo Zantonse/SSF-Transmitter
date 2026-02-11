@@ -1,4 +1,5 @@
 export type RiskLevel = 'low' | 'medium' | 'high';
+export type EventCategory = 'risk' | 'lifecycle';
 
 export interface SecurityEvent {
   id: string;
@@ -6,7 +7,8 @@ export interface SecurityEvent {
   schema: string;
   severity: RiskLevel;
   description: string;
-  buildPayload: (email: string, timestamp: number) => Record<string, unknown>;
+  category: EventCategory;
+  buildPayload: (email: string, timestamp: number, riskLevel: RiskLevel) => Record<string, unknown>;
 }
 
 export interface SecurityProvider {
