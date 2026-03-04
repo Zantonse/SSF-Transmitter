@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSF Transmitter — Hackathon Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a1018;
+    --bg-elevated: #111a2a;
+    --bg-card: #152033;
+    --border: #1a2540;
+    --border-accent: #243052;
+    --text: #e8ecf4;
+    --text-dim: #7a8baa;
+    --text-muted: #4a5978;
+    --okta-blue: #1662DD;
+    --okta-glow: #1662DD40;
+    --red: #f85149;
+    --red-glow: #f8514940;
+    --green: #10b981;
+    --green-glow: #10b98140;
+    --amber: #f59e0b;
+    --purple: #8b5cf6;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body: 'Instrument Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Menlo', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 256px;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--bg-elevated);
+    z-index: 1000;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--okta-blue), var(--red));
+    transition: width 0.4s ease;
+  }
+
+  /* ─── SLIDES CONTAINER ─── */
+  .slides {
+    width: 100%;
+  }
+
+  .slide {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 80px;
+    min-height: 100vh;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  /* ─── SECTION DIVIDER ─── */
+  .slide + .slide {
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── SCROLL REVEAL ─── */
+  .reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── COMMON ELEMENTS ─── */
+  .overline {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--okta-blue);
+    margin-bottom: 24px;
+  }
+  .overline.red { color: var(--red); }
+  .overline.green { color: var(--green); }
+  .overline.amber { color: var(--amber); }
+  .overline.purple { color: var(--purple); }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 6vw, 84px);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--okta-blue);
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 4.5vw, 64px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  h2 em { font-style: italic; color: var(--okta-blue); }
+  h2 .red-em { font-style: italic; color: var(--red); }
+
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 640px;
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+
+  .mono-meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    display: flex;
+    gap: 36px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mono-meta .val { color: var(--text-dim); font-weight: 500; }
+
+  /* ─── SLIDE-SPECIFIC: TITLE ─── */
+  .slide-title::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(ellipse, var(--okta-glow) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .okta-wordmark {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .okta-wordmark .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--okta-blue);
+    box-shadow: 0 0 12px var(--okta-glow);
+  }
+
+  .title-author {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 40px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── SLIDE-SPECIFIC: PROBLEM ─── */
+  .broken-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 40px 0 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .bp-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .bp-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .bp-icon.vendor {
+    background: #EC1C2418;
+    border: 1px solid #EC1C2444;
+    color: #EC1C24;
+  }
+  .bp-icon.gap {
+    background: var(--bg-elevated);
+    border: 2px dashed var(--border-accent);
+    color: var(--text-muted);
+    font-size: 18px;
+  }
+  .bp-icon.okta {
+    background: #1662DD18;
+    border: 1px solid #1662DD44;
+    color: var(--okta-blue);
+  }
+  .bp-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    max-width: 90px;
+    text-align: center;
+  }
+  .bp-arrow {
+    width: 48px;
+    height: 2px;
+    position: relative;
+    margin: 0 4px;
+    margin-bottom: 20px;
+  }
+  .bp-arrow .line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border-accent);
+  }
+  .bp-arrow.broken .line {
+    background: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 6px, transparent 6px, transparent 12px);
+    opacity: 0.5;
+  }
+  .bp-arrow .head {
+    position: absolute;
+    right: -2px;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid var(--border-accent);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+  .bp-arrow.broken .head {
+    border-left-color: var(--red);
+    opacity: 0.5;
+  }
+
+  .problem-points {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 800px;
+    margin-top: 16px;
+  }
+  .problem-point {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    text-align: left;
+  }
+  .problem-point .pp-icon {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  .problem-point h4 {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .problem-point p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ─── SLIDE-SPECIFIC: HUB & SPOKE ─── */
+  .hub-spoke {
+    position: relative;
+    width: 440px;
+    height: 440px;
+    margin: 20px 0;
+  }
+  .hub-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1662DD30, #1662DD10);
+    border: 2px solid var(--okta-blue);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: 0 0 40px var(--okta-glow), 0 0 80px #1662DD15;
+  }
+  .hub-center .hub-label {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--okta-blue);
+    letter-spacing: 0.04em;
+  }
+  .hub-center .hub-sub {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .spoke-node {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: transform 0.3s ease;
+  }
+  .spoke-node:hover { transform: scale(1.1); }
+  .spoke-icon {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .spoke-label {
+    font-family: var(--font-mono);
+    font-size: 7px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .spoke-line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: 1px;
+    transform-origin: 0 0;
+    z-index: 1;
+  }
+  .spoke-line .inner {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border-accent), transparent);
+    opacity: 0.5;
+  }
+
+  /* ─── SLIDE-SPECIFIC: WHAT I BUILT ─── */
+  .stat-row {
+    display: flex;
+    gap: 48px;
+    margin: 36px 0 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: 56px;
+    color: var(--okta-blue);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .feature-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 680px;
+  }
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+  }
+  .pill.highlight {
+    border-color: var(--okta-blue);
+    background: #1662DD12;
+    color: var(--okta-blue);
+  }
+
+  /* ─── SLIDE-SPECIFIC: ARCHITECTURE ─── */
+  .arch-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 36px 0 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .arch-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 90px;
+  }
+  .arch-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .arch-icon.cs { background: #EC1C2418; border: 1px solid #EC1C2444; color: #EC1C24; }
+  .arch-icon.soar { background: #f59e0b18; border: 1px solid #f59e0b44; color: var(--amber); }
+  .arch-icon.ssf { background: #1662DD18; border: 1px solid #1662DD44; color: var(--okta-blue); }
+  .arch-icon.api { background: #10b98118; border: 1px solid #10b98144; color: var(--green); }
+  .arch-icon.policy { background: #8b5cf618; border: 1px solid #8b5cf644; color: var(--purple); }
+  .arch-icon.logout { background: #f8514918; border: 1px solid #f8514944; color: var(--red); }
+
+  .arch-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    max-width: 80px;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .arch-arrow {
+    width: 36px;
+    height: 2px;
+    position: relative;
+    margin: 0 2px;
+    margin-bottom: 28px;
+  }
+  .arch-arrow .line {
+    height: 2px;
+    background: var(--border-accent);
+    width: 100%;
+  }
+  .arch-arrow .head {
+    position: absolute;
+    right: -2px;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid var(--border-accent);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  .tech-badges {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .tech-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 6px 16px;
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  /* ─── SLIDE-SPECIFIC: LIVE DEMO ─── */
+  .slide-demo::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(ellipse, var(--red-glow) 0%, transparent 60%);
+    pointer-events: none;
+    animation: demoPulse 3s ease-in-out infinite;
+    z-index: 0;
+  }
+  .slide-demo > * { position: relative; z-index: 1; }
+  @keyframes demoPulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  .demo-cta {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-top: 32px;
+    padding: 12px 28px;
+    border: 1px solid #f8514944;
+    border-radius: 8px;
+    background: #f8514910;
+    animation: ctaPulse 2s ease-in-out infinite;
+  }
+  @keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 0 0 0 #f8514930; }
+    50% { box-shadow: 0 0 20px 4px #f8514930; }
+  }
+
+  /* ─── SLIDE-SPECIFIC: GENARR ─── */
+  .impact-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 900px;
+    margin-top: 36px;
+  }
+  .impact-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px;
+    text-align: left;
+    transition: border-color 0.3s;
+  }
+  .impact-card:hover { border-color: var(--border-accent); }
+  .impact-card .ic-number {
+    font-family: var(--font-display);
+    font-size: 32px;
+    color: var(--okta-blue);
+    margin-bottom: 12px;
+    line-height: 1;
+  }
+  .impact-card h4 {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .impact-card p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ─── SLIDE-SPECIFIC: VENDOR GRID ─── */
+  .vendor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    max-width: 720px;
+    margin: 32px 0 20px;
+  }
+  .vendor-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.3s;
+  }
+  .vendor-card:hover { border-color: var(--border-accent); }
+  .vendor-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .vendor-name {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .vendor-type {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .reach-stat {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: center;
+  }
+  .reach-stat strong {
+    color: var(--okta-blue);
+    font-weight: 500;
+  }
+
+  /* ─── SLIDE-SPECIFIC: TECH DEPTH ─── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 820px;
+    margin: 32px 0 24px;
+  }
+  .tech-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    text-align: left;
+  }
+  .tech-card .tc-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .tech-card h4 {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .tech-card p {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .tech-card.ai {
+    border-color: #8b5cf644;
+    grid-column: 1 / -1;
+  }
+  .tech-card.ai .tc-label { color: var(--purple); }
+
+  /* ─── SLIDE-SPECIFIC: PUNCHLINE ─── */
+  .slide-punchline::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(ellipse, var(--okta-glow) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .slide-punchline > * { position: relative; z-index: 1; }
+  .punchline-flow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 32px 0 36px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pf-step {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+  }
+  .pf-step.cs { border-color: #EC1C2444; color: #EC1C24; }
+  .pf-step.okta { border-color: #1662DD44; color: var(--okta-blue); }
+  .pf-step.action { border-color: #10b98144; color: var(--green); }
+  .pf-arrow {
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+
+  .punchline-quote {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3vw, 38px);
+    font-style: italic;
+    color: var(--text);
+    max-width: 700px;
+    text-align: center;
+    line-height: 1.4;
+    position: relative;
+  }
+  .punchline-quote em {
+    color: var(--okta-blue);
+    font-style: italic;
+  }
+
+  /* ─── SLIDE-SPECIFIC: THANK YOU ─── */
+  .thanks-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .thanks-link {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+  .thanks-link .label { color: var(--text-muted); margin-right: 8px; }
+  .built-with {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 40px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    letter-spacing: 0.06em;
+  }
+  .built-with .ai { color: var(--purple); }
+
+  /* ─── ANIMATIONS ─── */
+  .anim {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .anim.visible { opacity: 1; transform: translateY(0); }
+  .anim.d1 { transition-delay: 0.05s; }
+  .anim.d2 { transition-delay: 0.15s; }
+  .anim.d3 { transition-delay: 0.25s; }
+  .anim.d4 { transition-delay: 0.35s; }
+  .anim.d5 { transition-delay: 0.45s; }
+  .anim.d6 { transition-delay: 0.55s; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .slide { padding: 40px 32px; }
+    .problem-points { grid-template-columns: 1fr; }
+    .impact-cards { grid-template-columns: 1fr; }
+    .vendor-grid { grid-template-columns: 1fr 1fr; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .hub-spoke { width: 300px; height: 300px; }
+  }
+
+  /* ─── CRITERION TAG ─── */
+  .criterion-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    align-self: center;
+  }
+  .criterion-tag.arr {
+    color: var(--green);
+    background: #10b98112;
+    border: 1px solid #10b98133;
+  }
+  .criterion-tag.challenge {
+    color: var(--purple);
+    background: #8b5cf612;
+    border: 1px solid #8b5cf633;
+  }
+  .criterion-tag.demo {
+    color: var(--amber);
+    background: #f59e0b12;
+    border: 1px solid #f59e0b33;
+  }
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ═══════════════ SECTIONS ═══════════════ -->
+<div class="slides" id="slidesContainer">
+
+  <!-- SLIDE 1: TITLE -->
+  <section class="slide slide-title" data-notes="Open strong: 'I'm Craig, and I built a tool that changed how I sell ITP. Let me show you why.' Keep this fast — 10 seconds max.">
+    <div class="okta-wordmark anim d1"><span class="dot"></span> OKTA</div>
+    <h1 class="anim d2">SSF <em>Transmitter</em></h1>
+    <p class="subtitle anim d3">A production-grade tool that simulates real vendor security signals to Okta Identity Threat Protection — live, in the demo.</p>
+    <div class="mono-meta anim d4">
+      <span>HACK <span class="val">GenARR 2026</span></span>
+      <span>CATEGORY <span class="val">Demo Impact</span></span>
+    </div>
+    <div class="title-author anim d5">Craig Verzosa &middot; Solutions Engineering</div>
+  </section>
+
+  <!-- SLIDE 2: WHAT I BUILT -->
+  <section class="slide" data-notes="Transition from 'why Okta' to 'what I built'. Emphasize that this isn't a prototype — it's a production-quality tool with 9 vendors, 31 events, attack scenario automation, and persistence. Hit the stats hard.">
+    <div class="criterion-tag challenge">Challenging</div>
+    <div class="overline anim d1">What I Built</div>
+    <h2 class="anim d2">SSF <em>Transmitter</em></h2>
+    <p class="subtitle anim d3">A tool that lets any SE simulate real security vendor signals to Okta ITP — fire signed Security Event Tokens live in the demo, and watch Okta respond in real time.</p>
+
+    <div class="stat-row anim d4">
+      <div class="stat">
+        <div class="stat-number">9</div>
+        <div class="stat-label">Security Vendors</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">31</div>
+        <div class="stat-label">Event Types</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">3</div>
+        <div class="stat-label">Attack Scenarios</div>
+      </div>
+    </div>
+
+    <div class="feature-pills anim d5">
+      <span class="pill highlight">Real JWT Signing</span>
+      <span class="pill highlight">Browser RSA Crypto</span>
+      <span class="pill">Bulk Event Sending</span>
+      <span class="pill">Scenario Automation</span>
+      <span class="pill">Payload Preview</span>
+      <span class="pill">Transmission History</span>
+      <span class="pill">Custom Event Builder</span>
+      <span class="pill">Config Persistence</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: HOW IT WORKS -->
+  <section class="slide" data-notes="Walk through the architecture in 30 seconds. The key insight: this tool does EXACTLY what the real CrowdStrike Falcon Fusion SOAR action does — it signs a SET and sends it to Okta's Security Events API. The pipeline is: Detection -> SOAR Workflow -> SSF Transmitter -> Okta API -> Risk Policy -> Universal Logout.">
+    <div class="criterion-tag challenge">Challenging</div>
+    <div class="overline anim d1">Architecture</div>
+    <h2 class="anim d2">How it <em>works</em></h2>
+    <p class="subtitle anim d3">This tool does exactly what CrowdStrike's Falcon Fusion SOAR action does — signs a Security Event Token and sends it to Okta.</p>
+
+    <div class="arch-pipeline anim d4">
+      <div class="arch-node">
+        <div class="arch-icon cs">&#9888;&#xFE0E;</div>
+        <div class="arch-label">CrowdStrike Detection</div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="head"></div></div>
+      <div class="arch-node">
+        <div class="arch-icon soar">&#9881;&#xFE0E;</div>
+        <div class="arch-label">Falcon Fusion SOAR</div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="head"></div></div>
+      <div class="arch-node">
+        <div class="arch-icon ssf">&#10515;</div>
+        <div class="arch-label">SSF Transmitter</div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="head"></div></div>
+      <div class="arch-node">
+        <div class="arch-icon api">&#10003;</div>
+        <div class="arch-label">Okta Security Events API</div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="head"></div></div>
+      <div class="arch-node">
+        <div class="arch-icon policy">&#9733;</div>
+        <div class="arch-label">Entity Risk Policy</div>
+      </div>
+      <div class="arch-arrow"><div class="line"></div><div class="head"></div></div>
+      <div class="arch-node">
+        <div class="arch-icon logout">&#10005;</div>
+        <div class="arch-label">Universal Logout</div>
+      </div>
+    </div>
+
+    <div class="tech-badges anim d5">
+      <span class="tech-badge">Next.js 15 + React 19</span>
+      <span class="tech-badge">jose (JWT/JWK)</span>
+      <span class="tech-badge">Web Crypto API</span>
+      <span class="tech-badge">RFC 8936 (SSF)</span>
+      <span class="tech-badge">secevent+jwt</span>
+      <span class="tech-badge">React Compiler</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: LIVE DEMO -->
+  <section class="slide slide-demo" data-notes="This is your transition to the live app. Say: 'Let me show you.' Then switch to the running SSF Transmitter app. Fire a CrowdStrike Malware Detected event. Switch to Okta Admin Console to show the signal arriving. Switch back and fire Credential Theft. Show both events in Okta System Log. Then come back to the presentation.">
+    <div class="criterion-tag demo">Demo Quality</div>
+    <div class="overline red anim d1">Act Two</div>
+    <h2 class="anim d2">Let me <em>show</em> you.</h2>
+    <div class="demo-cta anim d3">Switch to Live Demo</div>
+  </section>
+
+  <!-- SLIDE 7: GENARR IMPACT -->
+  <section class="slide" data-notes="After the live demo, come back here. This is the money slide — 50% of judging weight. Hit each point deliberately: (1) Every ITP demo becomes more impactful because the signal flow is VISIBLE. (2) It answers 'Why Okta' by showing Okta as the convergence point. (3) It works for ANY SE selling ITP, ANY prospect with EDR/XDR, ANY vendor integration.">
+    <div class="criterion-tag arr">GenARR Potential &middot; 50%</div>
+    <div class="overline green anim d1">GenARR Impact</div>
+    <h2 class="anim d2">Driving <em>revenue</em></h2>
+
+    <div class="impact-cards anim d3">
+      <div class="impact-card">
+        <div class="ic-number">01</div>
+        <h4>Demo Impact</h4>
+        <p>Every ITP demo becomes viscerally more impactful. The customer sees the signal flow from CrowdStrike to Universal Logout in real time. The story lands deeper than slides ever could.</p>
+      </div>
+      <div class="impact-card">
+        <div class="ic-number">02</div>
+        <h4>Answers "Why Okta"</h4>
+        <p>Shows Okta as the convergence point for all security signals. When 9 vendors all feed into one identity platform, the platform lock-in story writes itself.</p>
+      </div>
+      <div class="impact-card">
+        <div class="ic-number">03</div>
+        <h4>Widely Applicable</h4>
+        <p>Any SE selling ITP can use this. Any prospect with CrowdStrike, Zscaler, Palo Alto, Microsoft, or any other SSF vendor is a fit. That's nearly every enterprise deal.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: APPLICABILITY -->
+  <section class="slide" data-notes="Reinforce breadth. This isn't a CrowdStrike-only tool. It supports 9 vendors spanning EDR, CASB, XDR, email security, and SASE. Plus RISC lifecycle events and a custom builder for anything else. Any SE, any prospect, any vendor.">
+    <div class="criterion-tag arr">GenARR Potential</div>
+    <div class="overline anim d1">Applicability</div>
+    <h2 class="anim d2">Every vendor. <em>Every SE.</em></h2>
+    <p class="subtitle anim d3">Pre-built integrations for every major security vendor in the SSF ecosystem.</p>
+
+    <div class="vendor-grid anim d4">
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#EC1C24;box-shadow:0 0 8px #EC1C2440;"></div>
+        <div>
+          <div class="vendor-name">CrowdStrike Falcon</div>
+          <div class="vendor-type">EDR / MDR</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#0090d4;box-shadow:0 0 8px #0090d440;"></div>
+        <div>
+          <div class="vendor-name">Zscaler ZIA</div>
+          <div class="vendor-type">CASB / DLP</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#fa582d;box-shadow:0 0 8px #fa582d40;"></div>
+        <div>
+          <div class="vendor-name">Palo Alto Cortex XDR</div>
+          <div class="vendor-type">XDR</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#0078d4;box-shadow:0 0 8px #0078d440;"></div>
+        <div>
+          <div class="vendor-name">Microsoft Defender</div>
+          <div class="vendor-type">Entra ID / Defender</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#7c3aed;box-shadow:0 0 8px #7c3aed40;"></div>
+        <div>
+          <div class="vendor-name">SentinelOne</div>
+          <div class="vendor-type">EPP / EDR</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#0d9488;box-shadow:0 0 8px #0d948840;"></div>
+        <div>
+          <div class="vendor-name">Netskope</div>
+          <div class="vendor-type">SASE / DLP</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#ca8a04;box-shadow:0 0 8px #ca8a0440;"></div>
+        <div>
+          <div class="vendor-name">Proofpoint</div>
+          <div class="vendor-type">Email Security</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#0891b2;box-shadow:0 0 8px #0891b240;"></div>
+        <div>
+          <div class="vendor-name">Cisco Secure Endpoint</div>
+          <div class="vendor-type">EDR</div>
+        </div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-dot" style="background:#6366f1;box-shadow:0 0 8px #6366f140;"></div>
+        <div>
+          <div class="vendor-name">RISC Lifecycle</div>
+          <div class="vendor-type">OpenID Standard</div>
+        </div>
+      </div>
+    </div>
+    <p class="reach-stat anim d5"><strong>31 event types</strong> &middot; <strong>3 attack scenarios</strong> &middot; Custom event builder for anything else</p>
+  </section>
+
+  <!-- SLIDE 9: TECHNICAL DEPTH -->
+  <section class="slide" data-notes="Hit the 'Challenging' criterion (35%). Cover: (1) Full RFC 8936 SSF implementation, (2) Browser-side RSA key generation via Web Crypto API, (3) Standards-compliant JWT signing with secevent+jwt type, (4) React 19 Compiler for automatic optimization. Then the AI angle: Claude Code built 90%+ of the codebase through iterative prompting — the entire crypto pipeline, API routes, and component architecture.">
+    <div class="criterion-tag challenge">Challenging &middot; 35%</div>
+    <div class="overline purple anim d1">Technical Depth</div>
+    <h2 class="anim d2">What makes this <em>hard</em></h2>
+
+    <div class="tech-grid anim d3">
+      <div class="tech-card">
+        <div class="tc-label">Standards</div>
+        <h4>Full SSF / RFC 8936 Implementation</h4>
+        <p>Standards-compliant Security Event Tokens with secevent+jwt type header, proper audience validation, and Okta-specific schema compliance.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tc-label">Cryptography</div>
+        <h4>Browser-Side RSA Key Generation</h4>
+        <p>RS256 keypair generation in the browser via Web Crypto API. Private key exported as PKCS8 for server-side JWT signing. JWKS export for Okta verification.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tc-label">Architecture</div>
+        <h4>Production-Grade Next.js App</h4>
+        <p>React 19 with experimental Compiler, TypeScript strict mode, config-driven provider system, session persistence, and real-time activity logging.</p>
+      </div>
+      <div class="tech-card">
+        <div class="tc-label">Automation</div>
+        <h4>Scenario & Bulk Orchestration</h4>
+        <p>Pre-built multi-step attack scenarios with configurable delays. Bulk event queue with progress tracking. Transmission replay from history.</p>
+      </div>
+      <div class="tech-card ai">
+        <div class="tc-label">AI-Assisted Development</div>
+        <h4>Built with Claude Code</h4>
+        <p>90%+ of this codebase was generated through iterative AI-assisted development with Claude Code — from the RSA crypto pipeline to the complete component architecture. The AI understood the SSF specification, Okta's API requirements, and React 19 patterns to produce production-quality code.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10: PUNCHLINE -->
+  <section class="slide slide-punchline" data-notes="This is the emotional close. Slow down. Let it land. Say: 'When a customer watches a CrowdStrike signal flow into Okta and trigger Universal Logout — in real time, in front of them — the question isn't Why Okta. It's When can we start.'">
+    <div class="criterion-tag arr">GenARR Potential</div>
+    <div class="overline anim d1">The Moment</div>
+
+    <div class="punchline-flow anim d2">
+      <span class="pf-step cs">CrowdStrike Signal</span>
+      <span class="pf-arrow">&#8594;</span>
+      <span class="pf-step okta">Okta Risk Elevation</span>
+      <span class="pf-arrow">&#8594;</span>
+      <span class="pf-step action">Universal Logout</span>
+    </div>
+
+    <div class="punchline-quote anim d3">
+      The question isn't <em>"Why Okta?"</em><br>It's <em>"When can we start?"</em>
+    </div>
+  </section>
+
+  <!-- SLIDE 11: THANK YOU -->
+  <section class="slide" data-notes="Thank the judges. Offer to answer questions. If anyone wants to try the tool, it runs locally on any machine with Node.js.">
+    <div class="overline anim d1">Thank You</div>
+    <h2 class="anim d2">Questions?</h2>
+
+    <div class="thanks-links anim d3">
+      <div class="thanks-link"><span class="label">BUILT BY</span> Craig Verzosa &middot; Solutions Engineering</div>
+      <div class="thanks-link"><span class="label">STACK</span> Next.js 15 &middot; React 19 &middot; TypeScript &middot; jose</div>
+    </div>
+
+    <div class="built-with anim d4">Built with <span class="ai">Claude Code</span></div>
+  </section>
+
+</div>
+
+<script>
+(function() {
+  const progress = document.getElementById('progress');
+
+  // Scroll-based progress bar
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progress.style.width = pct + '%';
+  }
+
+  // Intersection Observer for scroll-triggered animations
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  // Observe all .anim elements
+  document.querySelectorAll('.anim').forEach(function(el) {
+    observer.observe(el);
+  });
+
+  // Click to advance to next section
+  const slides = Array.from(document.querySelectorAll('.slide'));
+
+  function getCurrentSection() {
+    const scrollY = window.scrollY + window.innerHeight * 0.4;
+    for (let i = slides.length - 1; i >= 0; i--) {
+      if (slides[i].offsetTop <= scrollY) return i;
+    }
+    return 0;
+  }
+
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('a, button, input, textarea')) return;
+    const current = getCurrentSection();
+    const next = Math.min(current + 1, slides.length - 1);
+    if (next !== current) {
+      slides[next].scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+})();
+</script>
+</body>
+</html>
